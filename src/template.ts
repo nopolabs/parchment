@@ -15,6 +15,7 @@ export function buildTemplate(
   name:        string,
   achievement: string,
   sealDataUrl: string | null,
+  serial:      string,
 ): object {
   const { palette, fonts } = config;
 
@@ -195,7 +196,7 @@ export function buildTemplate(
               fontSize:   14,
               color:      palette.bodyText,
             },
-          }, config.siteName),
+          }, serial),
         ),
       ),
     ),

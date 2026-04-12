@@ -43,12 +43,13 @@ export async function renderCertificate(
   config:      SiteConfig,
   name:        string,
   achievement: string,
+  serial:      string,
   fonts:       FontData[],
 ): Promise<Uint8Array> {
   const sealDataUrl = await fetchSeal(config.sealAssetUrl);
 
   const svg = await satori(
-    buildTemplate(config, name, achievement, sealDataUrl),
+    buildTemplate(config, name, achievement, sealDataUrl, serial),
     {
       width:  1200,
       height: 850,

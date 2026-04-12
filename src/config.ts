@@ -26,6 +26,7 @@ export interface SiteConfig {
   fonts:               FontConfig;
   sealAssetUrl:        string;
   r2KeyPrefix:         string;
+  fromEmail:           string;
 }
 
 export function getConfig(env: { SITE_ID: string }): SiteConfig {

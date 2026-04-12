@@ -18,5 +18,6 @@
     "bodyFamily":  "Source Sans Pro"
   },
   "sealAssetUrl": "https://bigbeautifulpeaceprize.com/assets/bbpp-seal.png",
-  "r2KeyPrefix":  "certs/bbpp/"
+  "r2KeyPrefix":  "certs/bbpp/",
+  "fromEmail":    "awards@mastertimewaster.com"
 }
