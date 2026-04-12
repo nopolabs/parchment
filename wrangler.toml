@@ -20,6 +20,20 @@ SITE_ID = "mtw"
 binding     = "PARCHMENT"
 bucket_name = "parchment-mtw"
 
+[[env.mtw.d1_databases]]
+binding       = "PARCHMENT_LOG"
+database_name = "parchment-log-mtw"
+database_id   = "822b2785-71c4-4a58-8931-9f24bb0614ed"
+
+[[env.mtw.queues.producers]]
+queue   = "parchment-queue-mtw"
+binding = "PARCHMENT_QUEUE"
+
+[[env.mtw.queues.consumers]]
+queue             = "parchment-queue-mtw"
+max_batch_size    = 10
+max_batch_timeout = 30
+
 [[env.mtw.routes]]
 pattern   = "mastertimewaster.com/parchment/*"
 zone_name = "mastertimewaster.com"
@@ -35,6 +49,20 @@ SITE_ID = "bbpp"
 [[env.bbpp.r2_buckets]]
 binding     = "PARCHMENT"
 bucket_name = "parchment-bbpp"
+
+[[env.bbpp.d1_databases]]
+binding       = "PARCHMENT_LOG"
+database_name = "parchment-log-bbpp"
+database_id   = "76a5dd0a-2189-4904-a752-f08e78b47e1a"
+
+[[env.bbpp.queues.producers]]
+queue   = "parchment-queue-bbpp"
+binding = "PARCHMENT_QUEUE"
+
+[[env.bbpp.queues.consumers]]
+queue             = "parchment-queue-bbpp"
+max_batch_size    = 10
+max_batch_timeout = 30
 
 [[env.bbpp.routes]]
 pattern   = "bigbeautifulpeaceprize.com/parchment/*"

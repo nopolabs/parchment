@@ -18,5 +18,6 @@
     "bodyFamily":  "Lato"
   },
   "sealAssetUrl": "https://mastertimewaster.com/assets/mtw-seal.png",
-  "r2KeyPrefix":  "certs/mtw/"
+  "r2KeyPrefix":  "certs/mtw/",
+  "fromEmail":    "awards@mastertimewaster.com"
 }
