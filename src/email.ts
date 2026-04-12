@@ -7,7 +7,7 @@ export async function sendCertificateEmail(
   png:      Uint8Array,
   apiKey:   string,
 ): Promise<void> {
-  const base64Png = btoa(String.fromCharCode(...png));
+  const base64Png = Buffer.from(png).toString('base64');
 
   const payload = {
     from:        `${siteName} <${from}>`,
