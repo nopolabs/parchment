@@ -70,7 +70,8 @@ parchment/
 │   ├── config.ts                 ← SiteConfig type definition and config loader
 │   ├── render.ts                 ← Satori + resvg-wasm pipeline
 │   ├── r2.ts                     ← R2 get/put helpers
-│   └── template.ts               ← Certificate layout as a Satori node tree
+│   ├── template.ts               ← Certificate layout (Satori node tree, no React)
+│   └── types.d.ts                ← Module declarations for *.wasm imports
 ├── config/
 │   ├── mtw.json                  ← Master Time Waster site config
 │   └── bbpp.json                 ← Big Beautiful Peace Prize site config
@@ -232,12 +233,9 @@ main            = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
-[build]
-command = "npm run build"
-
 [[rules]]
 type  = "Data"
-globs = ["assets/fonts/*.ttf"]
+globs = ["**/*.ttf"]
 fallthrough = true
 
 # ── MTW environment ───────────────────────────────────────────────────────────
@@ -273,6 +271,14 @@ pattern   = "bigbeautifulpeaceprize.com/parchment/*"
 zone_name = "bigbeautifulpeaceprize.com"
 ```
 
+**Note:** Do not add a `[build]` custom command section. Wrangler bundles TypeScript natively;
+a `[build] command = "npm run build"` entry causes infinite recursion (wrangler deploy → custom
+build → wrangler deploy → …).
+
+**Note:** The `[[rules]]` glob must be `**/*.ttf` (not `assets/fonts/*.ttf`) because wrangler
+matches globs against the resolved file path, which includes the relative prefix from the import
+specifier (e.g. `../assets/fonts/...`).
+
 All one-time Cloudflare infrastructure setup is handled by `scripts/cloudflare-setup.sh` (see §17).
 Claude Code must write that script but must not execute it.
 
@@ -280,8 +286,9 @@ Claude Code must write that script but must not execute it.
 
 ## 7. Env Interface
 
-After scaffolding, run `wrangler types` to generate `worker-configuration.d.ts`. The generated
-`Env` interface must include:
+After scaffolding, run `wrangler types --env mtw` to generate `worker-configuration.d.ts`.
+The `--env mtw` flag is required — plain `wrangler types` only sees top-level bindings and omits
+`PARCHMENT: R2Bucket`, which is defined per-environment. The generated `Env` interface must include:
 
 ```typescript
 interface Env {
@@ -653,10 +660,10 @@ return Response.json({ status: 'ok', siteId: env.SITE_ID });
   "private": true,
   "scripts": {
     "dev":        "wrangler dev --env mtw",
-    "build":      "wrangler deploy --dry-run --outdir dist",
+    "build":      "wrangler deploy --dry-run --outdir dist --env mtw",
     "deploy:mtw": "wrangler deploy --env mtw",
     "deploy:bbpp":"wrangler deploy --env bbpp",
-    "types":      "wrangler types",
+    "types":      "wrangler types --env mtw",
     "lint":       "eslint src --ext .ts",
     "typecheck":  "tsc --noEmit",
     "fonts":      "bash scripts/download-fonts.sh",
@@ -694,7 +701,8 @@ return Response.json({ status: 'ok', siteId: env.SITE_ID });
     "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true,
     "allowImportingTsExtensions": true,
-    "noEmit":           true
+    "noEmit":           true,
+    "skipLibCheck":     true
   },
   "include": ["src", "worker-configuration.d.ts"]
 }
@@ -879,25 +887,34 @@ FONTS_DIR="$(dirname "$0")/../assets/fonts"
 mkdir -p "$FONTS_DIR"
 
 echo "Downloading fonts..."
+# Google Fonts static TTF instances via the CSS2 API (legacy UA returns truetype format).
+# Playfair Display, Cormorant Garamond, and Source Sans Pro are variable-font-only on the
+# Google Fonts GitHub repo; static weight instances must be fetched from fonts.gstatic.com.
+GFONTS_UA="Mozilla/5.0"
 
-curl -sL -o "$FONTS_DIR/PlayfairDisplay-Bold.ttf" \
-  "https://github.com/google/fonts/raw/main/ofl/playfairdisplay/PlayfairDisplay%5Bwght%5D.ttf"
+get_ttf_url() {
+  curl -sA "$GFONTS_UA" "https://fonts.googleapis.com/css2?family=$1&display=swap" \
+    | grep -o 'url([^)]*\.ttf)' | sed 's/url(//' | sed 's/)//'
+}
 
-curl -sL -o "$FONTS_DIR/Lato-Regular.ttf" \
-  "https://github.com/google/fonts/raw/main/ofl/lato/Lato-Regular.ttf"
+PLAYFAIR_URL=$(get_ttf_url "Playfair+Display:wght@700")
+LATO_URL=$(get_ttf_url "Lato:wght@400")
+CORMORANT_URL=$(get_ttf_url "Cormorant+Garamond:wght@600")
+SOURCESANS_URL=$(get_ttf_url "Source+Sans+3:wght@400")
 
-curl -sL -o "$FONTS_DIR/CormorantGaramond-SemiBold.ttf" \
-  "https://github.com/google/fonts/raw/main/ofl/cormorantgaramond/CormorantGaramond-SemiBold.ttf"
-
-curl -sL -o "$FONTS_DIR/SourceSansPro-Regular.ttf" \
-  "https://github.com/google/fonts/raw/main/ofl/sourcesanspro/SourceSansPro-Regular.ttf"
+curl -sL -o "$FONTS_DIR/PlayfairDisplay-Bold.ttf"       "$PLAYFAIR_URL"
+curl -sL -o "$FONTS_DIR/Lato-Regular.ttf"               "$LATO_URL"
+curl -sL -o "$FONTS_DIR/CormorantGaramond-SemiBold.ttf" "$CORMORANT_URL"
+curl -sL -o "$FONTS_DIR/SourceSansPro-Regular.ttf"      "$SOURCESANS_URL"
 
 echo "Done. Fonts in $FONTS_DIR"
 ```
 
-⚠️ **NOTE:** Google Fonts GitHub raw URLs change occasionally. If any download fails, retrieve the
-correct URL from https://github.com/google/fonts and update the script. Claude Code must verify
-all four files exist and are non-empty TTF files after running the script.
+**NOTE:** Google Fonts GitHub no longer ships static-weight TTF files for Playfair Display,
+Cormorant Garamond, or Source Sans Pro — they are variable-font-only. The script above fetches
+static weight instances directly from `fonts.gstatic.com` via the CSS2 API. Claude Code must
+verify all four files exist and are valid TrueType files (`file` reports `TrueType Font data`)
+after running the script.
 
 ---
 

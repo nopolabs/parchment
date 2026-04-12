@@ -1,0 +1,22 @@
+{
+  "siteId": "bbpp",
+  "siteName": "Big Beautiful Peace Prize",
+  "certificateTitle": "The Big Beautiful Peace Prize",
+  "recipientLabel": "Presented to",
+  "achievementLabel": "Peace Prize Laureate",
+  "achievementSubtitle": "In recognition of extraordinary contributions to the art of peaceful coexistence",
+  "palette": {
+    "background": "#f0f4f8",
+    "border":     "#1a4a7a",
+    "titleText":  "#0d2844",
+    "bodyText":   "#2d4a6a",
+    "accent":     "#c9a227",
+    "nameText":   "#0d2844"
+  },
+  "fonts": {
+    "titleFamily": "Cormorant Garamond",
+    "bodyFamily":  "Source Sans Pro"
+  },
+  "sealAssetUrl": "https://bigbeautifulpeaceprize.com/assets/bbpp-seal.png",
+  "r2KeyPrefix":  "certs/bbpp/"
+}

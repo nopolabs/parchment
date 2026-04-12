@@ -1,0 +1,22 @@
+{
+  "siteId": "mtw",
+  "siteName": "Master Time Waster",
+  "certificateTitle": "Certificate of Certified Time Wasting",
+  "recipientLabel": "Hereby awarded to",
+  "achievementLabel": "Master Time Waster",
+  "achievementSubtitle": "In recognition of spectacular, world-class, unapologetic wasting of time",
+  "palette": {
+    "background": "#fdf6e3",
+    "border":     "#8b6914",
+    "titleText":  "#3d2b00",
+    "bodyText":   "#5c4a1e",
+    "accent":     "#c8960c",
+    "nameText":   "#2c1810"
+  },
+  "fonts": {
+    "titleFamily": "Playfair Display",
+    "bodyFamily":  "Lato"
+  },
+  "sealAssetUrl": "https://mastertimewaster.com/assets/mtw-seal.png",
+  "r2KeyPrefix":  "certs/mtw/"
+}

@@ -9,5 +9,8 @@ assets/fonts/*.ttf
 # Node
 node_modules/
 
+# Claude Code session files
+.claude/
+
 # macOS
 .DS_Store
