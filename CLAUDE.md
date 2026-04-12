@@ -84,3 +84,9 @@ npm run deploy:bbpp   # deploy BBPP environment to Cloudflare
 - Seal image fetch failures are non-fatal; certificate renders without the seal.
 - Cloudflare infrastructure changes (R2 buckets, routes) go through scripts/cloudflare-setup.sh,
   run manually by the developer — never automated by Claude Code.
+
+## TODO / Next Steps
+- [ ] create seal images for all awards
+- [ ] log awards that have been generated
+- [ ] email awards to recipients
+- [ ] add a serial number/counter to the certificate
