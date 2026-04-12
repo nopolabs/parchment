@@ -30,8 +30,7 @@ async function fetchSeal(sealAssetUrl: string): Promise<string | null> {
       return null;
     }
     const contentType = response.headers.get('content-type') ?? 'image/png';
-    const buffer = await response.arrayBuffer();
-    const base64 = btoa(String.fromCharCode(...new Uint8Array(buffer)));
+    const base64 = Buffer.from(await response.arrayBuffer()).toString('base64');
     return `data:${contentType};base64,${base64}`;
   } catch (err) {
     console.warn('parchment: seal fetch failed', sealAssetUrl, err);
