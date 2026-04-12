@@ -17,5 +17,5 @@ node_modules/
 
 # Secrets
 .secrets/
-*-dkim-private*.txt
-*-dkim-private*.pem
+*-dkim-*.txt
+*-dkim-*.pem
