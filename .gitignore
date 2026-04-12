@@ -1,0 +1,13 @@
+# Cloudflare / Wrangler
+.wrangler/
+worker-configuration.d.ts
+dist/
+
+# Fonts (downloaded via scripts/download-fonts.sh)
+assets/fonts/*.ttf
+
+# Node
+node_modules/
+
+# macOS
+.DS_Store
