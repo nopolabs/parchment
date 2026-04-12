@@ -1,0 +1,41 @@
+name            = "parchment-worker"
+main            = "src/index.ts"
+compatibility_date = "2024-09-23"
+compatibility_flags = ["nodejs_compat"]
+
+[[rules]]
+type  = "Data"
+globs = ["**/*.ttf"]
+fallthrough = true
+
+# ── MTW environment ───────────────────────────────────────────────────────────
+
+[env.mtw]
+name = "parchment-worker-mtw"
+
+[env.mtw.vars]
+SITE_ID = "mtw"
+
+[[env.mtw.r2_buckets]]
+binding     = "PARCHMENT"
+bucket_name = "parchment-mtw"
+
+[[env.mtw.routes]]
+pattern   = "mastertimewaster.com/parchment/*"
+zone_name = "mastertimewaster.com"
+
+# ── BBPP environment ──────────────────────────────────────────────────────────
+
+[env.bbpp]
+name = "parchment-worker-bbpp"
+
+[env.bbpp.vars]
+SITE_ID = "bbpp"
+
+[[env.bbpp.r2_buckets]]
+binding     = "PARCHMENT"
+bucket_name = "parchment-bbpp"
+
+[[env.bbpp.routes]]
+pattern   = "bigbeautifulpeaceprize.com/parchment/*"
+zone_name = "bigbeautifulpeaceprize.com"

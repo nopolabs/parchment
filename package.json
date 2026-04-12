@@ -1,0 +1,28 @@
+{
+  "name": "parchment",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "wrangler dev --env mtw",
+    "build": "wrangler deploy --dry-run --outdir dist --env mtw",
+    "deploy:mtw": "wrangler deploy --env mtw",
+    "deploy:bbpp": "wrangler deploy --env bbpp",
+    "types": "wrangler types --env mtw",
+    "lint": "eslint src --ext .ts",
+    "typecheck": "tsc --noEmit",
+    "fonts": "bash scripts/download-fonts.sh",
+    "setup:cf": "bash scripts/cloudflare-setup.sh"
+  },
+  "dependencies": {
+    "@resvg/resvg-wasm": "^2.0.0",
+    "satori": "^0.10.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "eslint": "^8.0.0",
+    "typescript": "^5.0.0",
+    "wrangler": "^4.81.1"
+  }
+}
