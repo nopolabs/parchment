@@ -28,11 +28,11 @@ export function buildTemplate(
   const sealElement: SatoriNode = sealDataUrl !== null
     ? node('img', {
         src:    sealDataUrl,
-        width:  80,
-        height: 80,
+        width:  200,
+        height: 200,
         style:  { objectFit: 'contain' },
       })
-    : node('div', { style: { width: 80, height: 80 } });
+    : node('div', { style: { width: 200, height: 200 } });
 
   return node('div', {
     style: {
