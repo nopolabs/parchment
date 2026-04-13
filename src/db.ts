@@ -9,6 +9,20 @@ export interface CertRecord {
   created_at:  string;
 }
 
+export async function hasRecentCertificate(
+  db:     D1Database,
+  siteId: string,
+  email:  string,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      'SELECT 1 FROM certificates WHERE site_id = ? AND email = ? AND date(created_at) = date(\'now\') LIMIT 1',
+    )
+    .bind(siteId, email)
+    .first<{ 1: number }>();
+  return row !== null;
+}
+
 export async function findCertificate(
   db:    D1Database,
   r2Key: string,
