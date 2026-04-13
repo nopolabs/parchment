@@ -2,6 +2,7 @@ import { getConfig }                            from './config.ts';
 import { buildCacheKey, getCached, putCached }  from './r2.ts';
 import { renderCertificate, ALL_FONTS }         from './render.ts';
 import { handleQueue, type IssueMessage }       from './queue.ts';
+import { hasRecentCertificate }                 from './db.ts';
 
 function jsonError(status: number, body: Record<string, string>): Response {
   return Response.json(body, { status });
@@ -106,8 +107,12 @@ export default {
       }
 
       const config = getConfig(env);
-      const ach    = achievement ?? config.achievementSubtitle;
 
+      if (await hasRecentCertificate(env.PARCHMENT_LOG, config.siteId, email)) {
+        return jsonError(429, { error: 'A certificate has already been issued to this email today' });
+      }
+
+      const ach = achievement ?? config.achievementSubtitle;
       const msg: IssueMessage = { name, achievement: ach, email };
       await env.PARCHMENT_QUEUE.send(msg);
 
