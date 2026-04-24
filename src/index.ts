@@ -76,6 +76,12 @@ export default {
     if (url.pathname === '/parchment/issue') {
       if (method !== 'POST') return jsonError(405, { error: 'method not allowed' });
 
+      const apiKey     = (env as Env & { ISSUE_API_KEY?: string }).ISSUE_API_KEY;
+      const authHeader = request.headers.get('Authorization');
+      if (!authHeader || !apiKey || authHeader !== `Bearer ${apiKey}`) {
+        return jsonError(401, { error: 'unauthorized' });
+      }
+
       let name: string;
       let achievement: string | null;
       let email: string;
