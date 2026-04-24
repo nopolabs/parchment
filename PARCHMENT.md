@@ -69,6 +69,17 @@ X-Parchment-Key: <r2 key>
 Queues an official certificate issuance. Returns immediately; the queue consumer handles
 rendering, logging, and email delivery asynchronously.
 
+**Authentication required.** Every request must carry:
+
+```
+Authorization: Bearer <ISSUE_API_KEY>
+```
+
+Missing or incorrect key → `401 { "error": "unauthorized" }`. The key is set per environment
+via `wrangler secret put ISSUE_API_KEY --env <mtw|bbpp>`. Callers are expected to be the
+Cloudflare Pages Function proxies on mastertimewaster.com and bigbeautifulpeaceprize.com,
+which also enforce Cloudflare Turnstile verification before forwarding.
+
 Accepts `application/x-www-form-urlencoded` or `application/json`.
 
 **Parameters:**
@@ -177,6 +188,33 @@ Max batch size: 10. Max batch timeout: 30s.
 ### Email
 Sent via [Resend](https://resend.com). API key stored as `RESEND_API_KEY` Worker secret.
 Both environments send from `awards@mastertimewaster.com`.
+
+### Secrets
+
+| Secret | Env | Purpose |
+|---|---|---|
+| `RESEND_API_KEY` | both | Resend email delivery |
+| `DKIM_PRIVATE_KEY` | both | DKIM signing for outbound email |
+| `ISSUE_API_KEY` | both | Bearer token required on `POST /parchment/issue` |
+
+Set via:
+```bash
+npx wrangler secret put ISSUE_API_KEY --env mtw
+npx wrangler secret put ISSUE_API_KEY --env bbpp
+```
+
+The `ISSUE_API_KEY` for each environment must match the `PARCHMENT_API_KEY` secret set in the
+corresponding Cloudflare Pages project (mtw4 / bbpp).
+
+### Access
+
+Both worker environments are exposed **only at their `workers.dev` URLs** — no custom domain
+routes are configured. All public traffic reaches parchment through the Pages Function proxies:
+
+| Environment | Workers.dev URL |
+|---|---|
+| `mtw` | `https://parchment-worker-mtw.danrevel.workers.dev` |
+| `bbpp` | `https://parchment-worker-bbpp.danrevel.workers.dev` |
 
 ### Fonts
 Four TTF files bundled as Worker static assets via Wrangler `Data` rule:
