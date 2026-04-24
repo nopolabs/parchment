@@ -34,10 +34,6 @@ queue             = "parchment-queue-mtw"
 max_batch_size    = 10
 max_batch_timeout = 30
 
-[[env.mtw.routes]]
-pattern   = "mastertimewaster.com/parchment/*"
-zone_name = "mastertimewaster.com"
-
 # ── BBPP environment ──────────────────────────────────────────────────────────
 
 [env.bbpp]
@@ -63,7 +59,3 @@ binding = "PARCHMENT_QUEUE"
 queue             = "parchment-queue-bbpp"
 max_batch_size    = 10
 max_batch_timeout = 30
-
-[[env.bbpp.routes]]
-pattern   = "bigbeautifulpeaceprize.com/parchment/*"
-zone_name = "bigbeautifulpeaceprize.com"
