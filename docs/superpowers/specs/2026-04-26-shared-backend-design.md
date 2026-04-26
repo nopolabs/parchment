@@ -45,8 +45,8 @@ Both Pages sites set `PARCHMENT_BASE_URL` to the same shared worker URL. Site id
 ### `src/config.ts`
 - `getConfig(env: Env)` → `getConfig(siteId: string)`
 - `Env` type loses `SITE_ID`
-- `Env` gains per-site API key vars: `MTW_ISSUE_API_KEY`, `BBPP_ISSUE_API_KEY`, etc.
 - `RESEND_API_KEY` remains a single shared secret
+- Per-site API keys (`MTW_ISSUE_API_KEY`, `BBPP_ISSUE_API_KEY`) are Cloudflare secrets and do not appear in the wrangler-generated `Env` type. A hand-written extension interface (e.g. `interface SecretsEnv { MTW_ISSUE_API_KEY: string; BBPP_ISSUE_API_KEY: string; }` intersected with the generated type) is the appropriate solution; this is the one exception to the "no hand-written Env" convention, which applies to bindings and vars that wrangler can introspect — not secrets.
 
 ### `src/index.ts`
 - Read site identity from `request.headers.get('X-Site-ID')`
@@ -64,7 +64,9 @@ Both Pages sites set `PARCHMENT_BASE_URL` to the same shared worker URL. Site id
 - Remove `[env.mtw]` and `[env.bbpp]` sections
 - Single top-level config with one R2, D1, and queue binding
 - `SITE_ID` var removed
-- Deploy scripts: `deploy:mtw` and `deploy:bbpp` → single `deploy`
+
+### `package.json`
+- `deploy:mtw` and `deploy:bbpp` scripts → single `deploy` script
 
 ### No changes needed
 `render.ts`, `template.ts`, `r2.ts`, `db.ts`, `email.ts` — all take `config` or `siteId` as arguments already.
