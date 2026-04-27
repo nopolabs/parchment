@@ -15,7 +15,7 @@ bucket_name = "parchment"
 [[d1_databases]]
 binding       = "PARCHMENT_LOG"
 database_name = "parchment-log"
-database_id   = "REPLACE_WITH_DB_ID"
+database_id   = "41e24f8f-b80b-4711-80f5-a51f8bb266f9"
 
 [[queues.producers]]
 queue   = "parchment-queue"
