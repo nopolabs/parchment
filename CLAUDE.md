@@ -135,7 +135,7 @@ Body params (form or JSON): `name` (required), `achievement` (optional), `email`
 - No hand-written Env interface — always regenerate via `npm run types`.
   Exception: `src/secrets-env.d.ts` extends Env with secret fields wrangler cannot introspect.
 - resvg-wasm initialized once at module level via a promise (wasmReady).
-- R2 is the permanent cache — keys are never deleted.
+- R2 cert PNGs are the canonical rendered output. Only delete a cert key to force a re-render after template changes (e.g. seal added); the queue consumer will re-render and re-cache on next issuance.
 - Seal image fetch failures are non-fatal; certificate renders without the seal.
 - Cloudflare infrastructure changes go through scripts/cloudflare-setup.sh,
   run manually by the developer — never automated by Claude Code.
