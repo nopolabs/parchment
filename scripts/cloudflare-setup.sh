@@ -43,11 +43,11 @@ create_r2_bucket "parchment"
 ensure_d1_database() {
   local DB_NAME="$1"
   if $WRANGLER d1 list 2>/dev/null | grep -q "${DB_NAME}"; then
-    echo -e "${YELLOW}⚠ D1 database '${DB_NAME}' already exists — skipping creation${RESET}"
+    echo -e "${YELLOW}⚠ D1 database '${DB_NAME}' already exists — skipping creation${RESET}" >&2
   else
-    echo "Creating D1 database: ${DB_NAME}..."
-    $WRANGLER d1 create "${DB_NAME}"
-    echo -e "${GREEN}✓ Created D1 database: ${DB_NAME}${RESET}"
+    echo "Creating D1 database: ${DB_NAME}..." >&2
+    $WRANGLER d1 create "${DB_NAME}" >&2
+    echo -e "${GREEN}✓ Created D1 database: ${DB_NAME}${RESET}" >&2
   fi
   local DB_ID
   DB_ID=$($WRANGLER d1 list 2>/dev/null | grep "${DB_NAME}" | awk -F'│' '{gsub(/ /,"",$2); print $2}')
