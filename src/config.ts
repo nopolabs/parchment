@@ -29,11 +29,20 @@ export interface SiteConfig {
   fromEmail:           string;
 }
 
-export function getConfig(env: { SITE_ID: string }): SiteConfig {
-  switch (env.SITE_ID) {
+export function getConfig(siteId: string): SiteConfig {
+  switch (siteId) {
     case 'mtw':  return mtwConfig  as SiteConfig;
     case 'bbpp': return bbppConfig as SiteConfig;
     default:
-      throw new Error(`Unknown SITE_ID: "${env.SITE_ID}". Expected "mtw" or "bbpp".`);
+      throw new Error(`Unknown site: "${siteId}". Expected "mtw" or "bbpp".`);
+  }
+}
+
+export function getIssueApiKey(siteId: string, env: Env): string {
+  switch (siteId) {
+    case 'mtw':  return env.MTW_ISSUE_API_KEY;
+    case 'bbpp': return env.BBPP_ISSUE_API_KEY;
+    default:
+      throw new Error(`No ISSUE_API_KEY configured for site: "${siteId}"`);
   }
 }

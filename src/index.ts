@@ -1,8 +1,8 @@
-import { getConfig }                            from './config.ts';
-import { buildCacheKey, getCached, putCached }  from './r2.ts';
-import { renderCertificate, ALL_FONTS }         from './render.ts';
-import { handleQueue, type IssueMessage }       from './queue.ts';
-import { hasRecentCertificate }                 from './db.ts';
+import { getConfig, getIssueApiKey, type SiteConfig } from './config.ts';
+import { buildCacheKey, getCached, putCached }      from './r2.ts';
+import { renderCertificate, ALL_FONTS }             from './render.ts';
+import { handleQueue, type IssueMessage }           from './queue.ts';
+import { hasRecentCertificate }                     from './db.ts';
 
 function jsonError(status: number, body: Record<string, string>): Response {
   return Response.json(body, { status });
@@ -13,10 +13,18 @@ export default {
     const url    = new URL(request.url);
     const method = request.method;
 
+    const siteId = request.headers.get('X-Site-ID') ?? '';
+    let config: SiteConfig;
+    try {
+      config = getConfig(siteId);
+    } catch {
+      return jsonError(400, { error: `unknown site: "${siteId}"` });
+    }
+
     // ── GET /parchment/health ─────────────────────────────────────────────────
     if (url.pathname === '/parchment/health') {
       if (method !== 'GET') return jsonError(405, { error: 'method not allowed' });
-      return Response.json({ status: 'ok', siteId: env.SITE_ID });
+      return Response.json({ status: 'ok', siteId });
     }
 
     // ── GET /parchment/render — preview certificate ───────────────────────────
@@ -36,7 +44,6 @@ export default {
         return jsonError(400, { error: 'achievement must be 200 characters or fewer' });
       }
 
-      const config        = getConfig(env);
       const ach           = achievement ?? config.achievementSubtitle;
       const previewPrefix = `previews/${config.siteId}/`;
       const key           = buildCacheKey(previewPrefix, name, ach);
@@ -76,7 +83,7 @@ export default {
     if (url.pathname === '/parchment/issue') {
       if (method !== 'POST') return jsonError(405, { error: 'method not allowed' });
 
-      const apiKey     = (env as Env & { ISSUE_API_KEY?: string }).ISSUE_API_KEY;
+      const apiKey     = getIssueApiKey(siteId, env);
       const authHeader = request.headers.get('Authorization');
       if (!authHeader || !apiKey || authHeader !== `Bearer ${apiKey}`) {
         return jsonError(401, { error: 'unauthorized' });
@@ -112,14 +119,12 @@ export default {
         return jsonError(400, { error: 'email parameter is required' });
       }
 
-      const config = getConfig(env);
-
       if (await hasRecentCertificate(env.PARCHMENT_LOG, config.siteId, email)) {
         return jsonError(429, { error: 'A certificate has already been issued to this email today' });
       }
 
       const ach = achievement ?? config.achievementSubtitle;
-      const msg: IssueMessage = { name, achievement: ach, email };
+      const msg: IssueMessage = { siteId, name, achievement: ach, email };
       await env.PARCHMENT_QUEUE.send(msg);
 
       return Response.json({ status: 'queued' }, { status: 202 });

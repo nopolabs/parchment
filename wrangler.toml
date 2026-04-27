@@ -8,54 +8,20 @@ type  = "Data"
 globs = ["**/*.ttf"]
 fallthrough = true
 
-# ── MTW environment ───────────────────────────────────────────────────────────
-
-[env.mtw]
-name = "parchment-worker-mtw"
-
-[env.mtw.vars]
-SITE_ID = "mtw"
-
-[[env.mtw.r2_buckets]]
+[[r2_buckets]]
 binding     = "PARCHMENT"
-bucket_name = "parchment-mtw"
+bucket_name = "parchment"
 
-[[env.mtw.d1_databases]]
+[[d1_databases]]
 binding       = "PARCHMENT_LOG"
-database_name = "parchment-log-mtw"
-database_id   = "822b2785-71c4-4a58-8931-9f24bb0614ed"
+database_name = "parchment-log"
+database_id   = "REPLACE_WITH_DB_ID"
 
-[[env.mtw.queues.producers]]
-queue   = "parchment-queue-mtw"
+[[queues.producers]]
+queue   = "parchment-queue"
 binding = "PARCHMENT_QUEUE"
 
-[[env.mtw.queues.consumers]]
-queue             = "parchment-queue-mtw"
-max_batch_size    = 10
-max_batch_timeout = 30
-
-# ── BBPP environment ──────────────────────────────────────────────────────────
-
-[env.bbpp]
-name = "parchment-worker-bbpp"
-
-[env.bbpp.vars]
-SITE_ID = "bbpp"
-
-[[env.bbpp.r2_buckets]]
-binding     = "PARCHMENT"
-bucket_name = "parchment-bbpp"
-
-[[env.bbpp.d1_databases]]
-binding       = "PARCHMENT_LOG"
-database_name = "parchment-log-bbpp"
-database_id   = "76a5dd0a-2189-4904-a752-f08e78b47e1a"
-
-[[env.bbpp.queues.producers]]
-queue   = "parchment-queue-bbpp"
-binding = "PARCHMENT_QUEUE"
-
-[[env.bbpp.queues.consumers]]
-queue             = "parchment-queue-bbpp"
+[[queues.consumers]]
+queue             = "parchment-queue"
 max_batch_size    = 10
 max_batch_timeout = 30

@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # scripts/cloudflare-setup.sh
 #
-# One-time Cloudflare infrastructure setup for parchment.
+# One-time Cloudflare infrastructure setup for parchment (shared backend).
 # Run manually: bash scripts/cloudflare-setup.sh
-# Requires: $WRANGLER authenticated via `$WRANGLER login`
+# Requires: wrangler authenticated via `npx wrangler login`
 # Safe to re-run: existing resources are detected and skipped.
 
 set -euo pipefail
@@ -13,23 +13,22 @@ GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 RESET='\033[0m'
 
-echo -e "${BOLD}parchment — Cloudflare setup${RESET}"
-echo "-------------------------------"
+echo -e "${BOLD}parchment — Cloudflare setup (shared backend)${RESET}"
+echo "----------------------------------------------"
 
-# ── Verify $WRANGLER is authenticated ─────────────────────────────────────────
 WRANGLER="npx wrangler"
 
-echo "Checking $WRANGLER authentication..."
+echo "Checking wrangler authentication..."
 if ! $WRANGLER whoami &>/dev/null; then
-  echo "ERROR: $WRANGLER is not authenticated. Run: npx $WRANGLER login"
+  echo "ERROR: wrangler is not authenticated. Run: npx wrangler login"
   exit 1
 fi
-echo -e "${GREEN}✓ $WRANGLER authenticated${RESET}"
+echo -e "${GREEN}✓ wrangler authenticated${RESET}"
 
-# ── R2 Buckets ────────────────────────────────────────────────────────────────
+# ── R2 Bucket ─────────────────────────────────────────────────────────────────
 create_r2_bucket() {
   local BUCKET_NAME="$1"
-  if $WRANGLER r2 bucket list 2>/dev/null | grep -q "name:.*${BUCKET_NAME}"; then
+  if $WRANGLER r2 bucket list 2>/dev/null | grep -qE "name:[[:space:]]*${BUCKET_NAME}[[:space:]]*$"; then
     echo -e "${YELLOW}⚠ R2 bucket '${BUCKET_NAME}' already exists — skipping${RESET}"
   else
     echo "Creating R2 bucket: ${BUCKET_NAME}..."
@@ -38,10 +37,9 @@ create_r2_bucket() {
   fi
 }
 
-create_r2_bucket "parchment-mtw"
-create_r2_bucket "parchment-bbpp"
+create_r2_bucket "parchment"
 
-# ── D1 Databases ──────────────────────────────────────────────────────────────
+# ── D1 Database ───────────────────────────────────────────────────────────────
 ensure_d1_database() {
   local DB_NAME="$1"
   if $WRANGLER d1 list 2>/dev/null | grep -q "${DB_NAME}"; then
@@ -51,28 +49,32 @@ ensure_d1_database() {
     $WRANGLER d1 create "${DB_NAME}"
     echo -e "${GREEN}✓ Created D1 database: ${DB_NAME}${RESET}"
   fi
-  # Extract UUID from table output: │ <uuid> │ <name> │ ...
   local DB_ID
   DB_ID=$($WRANGLER d1 list 2>/dev/null | grep "${DB_NAME}" | awk -F'│' '{gsub(/ /,"",$2); print $2}')
+  if [[ -z "${DB_ID}" ]]; then
+    echo "ERROR: failed to extract D1 database ID for '${DB_NAME}'. Cannot patch wrangler.toml." >&2
+    exit 1
+  fi
   echo "${DB_ID}"
 }
 
-MTW_DB_ID=$(ensure_d1_database "parchment-log-mtw")
-BBPP_DB_ID=$(ensure_d1_database "parchment-log-bbpp")
+DB_ID=$(ensure_d1_database "parchment-log")
 
-# Patch wrangler.toml with real database IDs
-sed -i '' "s/REPLACE_WITH_MTW_DB_ID/${MTW_DB_ID}/" wrangler.toml  2>/dev/null || true
-sed -i '' "s/REPLACE_WITH_BBPP_DB_ID/${BBPP_DB_ID}/" wrangler.toml 2>/dev/null || true
-echo -e "${GREEN}✓ wrangler.toml updated with D1 database IDs${RESET}"
+# Patch wrangler.toml with real database ID (skip if already patched on re-run)
+if grep -q "REPLACE_WITH_DB_ID" wrangler.toml 2>/dev/null; then
+  sed -i '' "s/REPLACE_WITH_DB_ID/${DB_ID}/" wrangler.toml
+  echo -e "${GREEN}✓ wrangler.toml patched with D1 database ID: ${DB_ID}${RESET}"
+else
+  echo -e "${YELLOW}⚠ wrangler.toml already contains a database ID — skipping patch${RESET}"
+fi
 
-# ── Apply D1 migrations ───────────────────────────────────────────────────────
+# ── Apply D1 migration ────────────────────────────────────────────────────────
 echo ""
-echo "Applying D1 migrations..."
-$WRANGLER d1 execute parchment-log-mtw  --remote --file migrations/0001_create_certificates.sql
-$WRANGLER d1 execute parchment-log-bbpp --remote --file migrations/0001_create_certificates.sql
-echo -e "${GREEN}✓ Migrations applied${RESET}"
+echo "Applying D1 migration..."
+$WRANGLER d1 execute parchment-log --remote --file migrations/0001_create_certificates.sql
+echo -e "${GREEN}✓ Migration applied${RESET}"
 
-# ── Queues ────────────────────────────────────────────────────────────────────
+# ── Queue ─────────────────────────────────────────────────────────────────────
 create_queue() {
   local QUEUE_NAME="$1"
   if $WRANGLER queues list 2>/dev/null | grep -q "${QUEUE_NAME}"; then
@@ -84,24 +86,18 @@ create_queue() {
   fi
 }
 
-create_queue "parchment-queue-mtw"
-create_queue "parchment-queue-bbpp"
-
-# ── Verification ──────────────────────────────────────────────────────────────
-echo ""
-echo "Verifying R2 buckets exist..."
-$WRANGLER r2 bucket list | grep "name:.*parchment-" || {
-  echo "ERROR: R2 buckets not found after creation. Check $WRANGLER output above."
-  exit 1
-}
+create_queue "parchment-queue"
 
 # ── Summary ───────────────────────────────────────────────────────────────────
 echo ""
 echo -e "${BOLD}${GREEN}Setup complete.${RESET}"
 echo ""
 echo "Next steps:"
-echo "  1. Update wrangler.toml with D1 database IDs (see above)"
-echo "  2. npm run types          # regenerate worker-configuration.d.ts"
-echo "  3. npm run dev            # test locally"
-echo "  4. npm run deploy:mtw     # deploy MTW environment"
-echo "  5. npm run deploy:bbpp    # deploy BBPP environment"
+echo "  1. npm run types          # regenerate worker-configuration.d.ts"
+echo "  2. npm run typecheck      # verify types pass"
+echo "  3. Set secrets:"
+echo "       npx wrangler secret put RESEND_API_KEY"
+echo "       npx wrangler secret put MTW_ISSUE_API_KEY"
+echo "       npx wrangler secret put BBPP_ISSUE_API_KEY"
+echo "  4. npm run deploy"
+echo "  5. Update PARCHMENT_BASE_URL on each Pages site"
