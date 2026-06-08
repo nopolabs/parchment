@@ -12,6 +12,9 @@ node_modules/
 # Claude Code session files
 .claude/
 
+# IDEs
+.idea/
+
 # macOS
 .DS_Store
 
