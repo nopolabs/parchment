@@ -2,7 +2,8 @@ import { getConfig, getIssueApiKey, type SiteConfig } from './config.ts';
 import { buildCacheKey, getCached, putCached }      from './r2.ts';
 import { renderCertificate, ALL_FONTS }             from './render.ts';
 import { handleQueue, type IssueMessage }           from './queue.ts';
-import { hasRecentCertificate }                     from './db.ts';
+import { hasRecentCertificate, findCertificate, findCertificateByToken, insertCertificate, setCertificateToken } from './db.ts';
+import { mintToken, TOKEN_PATTERN }                 from './token.ts';
 
 function jsonError(status: number, body: Record<string, string>): Response {
   return Response.json(body, { status });
@@ -123,11 +124,90 @@ export default {
         return jsonError(429, { error: 'A certificate has already been issued to this email today' });
       }
 
-      const ach = achievement ?? config.achievementSubtitle;
-      const msg: IssueMessage = { siteId, name, achievement: ach, email };
+      // The D1 record (and its personalization token) is created here,
+      // synchronously, so the token exists when this 202 returns — the
+      // awarder's print upsell depends on it. The queue keeps the slow work:
+      // render + email. Re-issuing the same name + achievement finds the
+      // existing record and returns its existing token (minting one lazily
+      // for pre-token records).
+      const ach   = achievement ?? config.achievementSubtitle;
+      const r2Key = buildCacheKey(config.r2KeyPrefix, name, ach);
+
+      let serial: string;
+      let token:  string;
+      const existing = await findCertificate(env.PARCHMENT_LOG, r2Key);
+      if (existing) {
+        serial = existing.serial;
+        if (existing.token !== null) {
+          token = existing.token;
+        } else {
+          token = mintToken();
+          await setCertificateToken(env.PARCHMENT_LOG, existing.id, token);
+        }
+      } else {
+        token  = mintToken();
+        serial = await insertCertificate(env.PARCHMENT_LOG, config.siteId, name, ach, r2Key, email, token);
+      }
+
+      const msg: IssueMessage = { siteId, name, achievement: ach, email, serial, token };
       await env.PARCHMENT_QUEUE.send(msg);
 
-      return Response.json({ status: 'queued' }, { status: 202 });
+      return Response.json({ status: 'queued', personalization_id: token }, { status: 202 });
+    }
+
+    // ── GET|HEAD /parchment/cert/<token> — resolve a personalization token ────
+    // The token is the capability: possession authorizes viewing the official
+    // PNG (and, on the site, buying a print of it). HEAD is the existence
+    // check clodsite checkout uses before creating a Stripe session;
+    // ?scale=3 is the print-resolution render the fulfillment email links to.
+    // Responses are no-store: the token is the URL, and CDN caches should not
+    // hold capability-addressed content.
+    if (url.pathname.startsWith('/parchment/cert/')) {
+      if (method !== 'GET' && method !== 'HEAD') {
+        return jsonError(405, { error: 'method not allowed' });
+      }
+
+      const token = url.pathname.slice('/parchment/cert/'.length);
+      if (!TOKEN_PATTERN.test(token)) {
+        return jsonError(404, { error: 'not found' });
+      }
+
+      const scaleParam = url.searchParams.get('scale');
+      const scale      = scaleParam === null ? 1 : Number(scaleParam);
+      if (!Number.isInteger(scale) || scale < 1 || scale > 4) {
+        return jsonError(400, { error: 'scale must be an integer between 1 and 4' });
+      }
+
+      const record = await findCertificateByToken(env.PARCHMENT_LOG, config.siteId, token);
+      if (record === null) {
+        return jsonError(404, { error: 'not found' });
+      }
+
+      const headers = {
+        'Content-Type':  'image/png',
+        'Cache-Control': 'no-store',
+      };
+      if (method === 'HEAD') {
+        return new Response(null, { status: 200, headers });
+      }
+
+      const key = scale === 1
+        ? record.r2_key
+        : record.r2_key.replace(/\.png$/, `@${scale}x.png`);
+
+      let png = await getCached(env.PARCHMENT, key);
+      if (png === null) {
+        // The queue may not have rendered yet (or this is a new scale) —
+        // render on demand with the same find-or-render path the consumer uses.
+        try {
+          png = await renderCertificate(config, record.name, record.achievement, record.serial, ALL_FONTS, scale);
+          await putCached(env.PARCHMENT, key, png);
+        } catch (err) {
+          console.error('parchment: render error', err);
+          return jsonError(500, { error: 'render failed', detail: String(err) });
+        }
+      }
+      return new Response(png, { status: 200, headers });
     }
 
     return jsonError(404, { error: 'not found' });
