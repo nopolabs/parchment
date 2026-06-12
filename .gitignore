@@ -22,3 +22,4 @@ node_modules/
 .secrets/
 *-dkim-*.txt
 *-dkim-*.pem
+.dev.vars

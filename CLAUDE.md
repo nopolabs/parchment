@@ -121,12 +121,32 @@ No D1 record created, no email sent.
 Query params: `name` (required, max 100), `achievement` (optional, max 200).
 
 ### POST /parchment/issue
-Queues an official certificate issuance. Returns `{"status":"queued"}` (202).
+Issues an official certificate. Creates the D1 record (serial, e.g. `MTW-0001`,
+and personalization token) synchronously in the handler, then queues the slow
+work — render + email — for the consumer. Re-issuing the same name + achievement
+returns the existing record's serial and token.
 Requires `Authorization: Bearer <SITEID_ISSUE_API_KEY>` header.
-The queue consumer renders the certificate with a serial number (e.g. `MTW-0001`),
-logs it to D1, and emails it to the recipient via Resend.
+
+Returns `{"status":"queued","personalization_id":"tok_..."}` (202).
 
 Body params (form or JSON): `name` (required), `achievement` (optional), `email` (required).
+
+### GET|HEAD /parchment/cert/&lt;token&gt;
+Resolves a personalization token to the official certificate PNG. The token is
+an unguessable capability minted at issue time — possession authorizes viewing
+the PNG and (on the site) buying a print; nothing else, in particular the
+recipient's email, is resolvable from it. `HEAD` is the cheap existence check
+(clodsite checkout validation). `?scale=N` (integer 1–4) rasterizes the same
+Satori SVG at N× for print quality (scale 3 → 3600×2550, 300 DPI at 12×8.5″);
+scaled renders are cached in R2 as `<key>@Nx.png`. Responses are
+`Cache-Control: no-store` — the token is the URL; CDN caches should not hold
+capability-addressed content. Renders on demand if the queue hasn't run yet.
+Unknown or malformed token → 404.
+
+When `SiteConfig.printOfferUrl` is set (bbpp only), the certificate email
+includes a purchase link with `{token}` substituted. Designed for clodsite's
+bbpp certificate commerce — see
+`codex-clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
 
 ## Conventions
 

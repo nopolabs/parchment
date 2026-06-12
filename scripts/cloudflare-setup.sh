@@ -68,11 +68,15 @@ else
   echo -e "${YELLOW}⚠ wrangler.toml already contains a database ID — skipping patch${RESET}"
 fi
 
-# ── Apply D1 migration ────────────────────────────────────────────────────────
+# ── Apply D1 migrations ───────────────────────────────────────────────────────
+# `d1 migrations apply` tracks applied migrations in a d1_migrations table, so
+# re-runs only apply what's new. 0001 predates the tracking table and may be
+# replayed once on first run — it is CREATE TABLE IF NOT EXISTS, so that replay
+# is a no-op.
 echo ""
-echo "Applying D1 migration..."
-$WRANGLER d1 execute parchment-log --remote --file migrations/0001_create_certificates.sql
-echo -e "${GREEN}✓ Migration applied${RESET}"
+echo "Applying D1 migrations..."
+$WRANGLER d1 migrations apply parchment-log --remote
+echo -e "${GREEN}✓ Migrations applied${RESET}"
 
 # ── Queue ─────────────────────────────────────────────────────────────────────
 create_queue() {

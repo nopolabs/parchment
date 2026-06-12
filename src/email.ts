@@ -1,19 +1,24 @@
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
 export async function sendCertificateEmail(
-  to:       string,
-  from:     string,
-  siteName: string,
-  png:      Uint8Array,
-  apiKey:   string,
+  to:            string,
+  from:          string,
+  siteName:      string,
+  png:           Uint8Array,
+  apiKey:        string,
+  printOfferUrl: string | null = null,
 ): Promise<void> {
   const base64Png = Buffer.from(png).toString('base64');
+
+  const printOffer = printOfferUrl
+    ? `<p>Want it on your wall? <a href="${printOfferUrl}">Order a printed copy</a>.</p>`
+    : '';
 
   const payload = {
     from:        `${siteName} <${from}>`,
     to:          [to],
     subject:     `Your ${siteName} Certificate`,
-    html:        `<p>Congratulations! Your <strong>${siteName}</strong> certificate is attached.</p>`,
+    html:        `<p>Congratulations! Your <strong>${siteName}</strong> certificate is attached.</p>${printOffer}`,
     attachments: [
       {
         filename: 'certificate.png',

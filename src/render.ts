@@ -38,12 +38,16 @@ async function fetchSeal(sealAssetUrl: string): Promise<string | null> {
   }
 }
 
+// Satori output is vector SVG; `scale` only changes the rasterization size
+// (scale 3 → 3600×2550, true 300 DPI at 12×8.5"). Text and borders stay
+// crisp at any scale; the seal is a raster source and upscales with it.
 export async function renderCertificate(
   config:      SiteConfig,
   name:        string,
   achievement: string,
   serial:      string,
   fonts:       FontData[],
+  scale:       number = 1,
 ): Promise<Uint8Array> {
   const sealDataUrl = await fetchSeal(config.sealAssetUrl);
 
@@ -57,7 +61,7 @@ export async function renderCertificate(
   );
 
   await wasmReady;
-  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 } });
+  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 * scale } });
   const png   = resvg.render();
   return png.asPng();
 }
