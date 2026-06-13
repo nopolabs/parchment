@@ -53,7 +53,7 @@ export async function handleQueue(
         : null;
 
       try {
-        await sendCertificateEmail(email, config.fromEmail, config.siteName, png, env.RESEND_API_KEY, printOfferUrl);
+        await sendCertificateEmail(email, config.fromEmail, config.siteName, name, png, env.RESEND_API_KEY, printOfferUrl);
       } catch (emailErr) {
         console.warn('parchment: email failed for', email, emailErr);
       }
