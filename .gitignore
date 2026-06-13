@@ -23,3 +23,6 @@ node_modules/
 *-dkim-*.txt
 *-dkim-*.pem
 .dev.vars
+
+# Secrets source of truth (push via scripts/push-secrets.sh)
+.env
