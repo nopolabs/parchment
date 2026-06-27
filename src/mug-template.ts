@@ -15,13 +15,23 @@ function node(type: string, props: Record<string, unknown>, ...children: (Satori
   return { type, props: { ...props, children: children.length === 1 ? children[0] : children } };
 }
 
-function centeredStyle(style: Record<string, unknown>): Record<string, unknown> {
+function alignedStyle(style: Record<string, unknown>, align: 'left' | 'center' | 'right'): Record<string, unknown> {
+  const justifyContent = align === 'left'
+    ? 'flex-start'
+    : align === 'right'
+      ? 'flex-end'
+      : 'center';
+
   return {
     ...style,
-    textAlign:      'center',
+    textAlign:      align,
     display:        'flex',
-    justifyContent: 'center',
+    justifyContent,
   };
+}
+
+function centeredStyle(style: Record<string, unknown>): Record<string, unknown> {
+  return alignedStyle(style, 'center');
 }
 
 function wrapText(text: string, maxChars: number): string[] {
@@ -224,7 +234,7 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
     }, config.achievementLabel),
     ...achievementBlock(achievement, palette.bodyText, fonts.bodyFamily),
     node('div', {
-      style: {
+      style: alignedStyle({
         position:   'absolute',
         left:       65,
         top:        655,
@@ -232,10 +242,10 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         fontFamily: fonts.bodyFamily,
         fontSize:   19,
         color:      palette.bodyText,
-      },
+      }, 'left'),
     }, issueDate),
     node('div', {
-      style: {
+      style: alignedStyle({
         position:   'absolute',
         right:      65,
         top:        655,
@@ -243,8 +253,7 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         fontFamily: fonts.bodyFamily,
         fontSize:   19,
         color:      palette.bodyText,
-        textAlign:  'right',
-      },
+      }, 'right'),
     }, serial),
   );
 }
