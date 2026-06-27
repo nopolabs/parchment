@@ -343,6 +343,18 @@ interface SiteConfig {
 
 One shared instance of each resource, bound in `wrangler.toml`.
 
+The Worker is also attached to the custom domain
+`parchment.nopolabs.com` via Wrangler:
+
+```toml
+[[routes]]
+pattern = "parchment.nopolabs.com"
+custom_domain = true
+```
+
+Do not create a manual CNAME first; Cloudflare creates the needed DNS record
+when the Worker custom domain is deployed.
+
 ### R2 — bucket `parchment` (binding `PARCHMENT`)
 Permanent PNG cache. Keys are never deleted (except deliberately, to force a
 re-render after template changes). Key namespaces:
