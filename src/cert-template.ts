@@ -10,7 +10,7 @@ function node(type: string, props: Record<string, unknown>, ...children: (Satori
   return { type, props: { ...props, children: children.length === 1 ? children[0] : children } };
 }
 
-export function buildTemplate(
+export function buildCertTemplate(
   config:      SiteConfig,
   name:        string,
   achievement: string,

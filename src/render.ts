@@ -9,7 +9,7 @@ import cormorantSemibold    from '../assets/fonts/CormorantGaramond-SemiBold.ttf
 import sourceSansProRegular from '../assets/fonts/SourceSansPro-Regular.ttf';
 
 import type { SiteConfig } from './config.ts';
-import { buildTemplate } from './template.ts';
+import { buildCertTemplate } from './cert-template.ts';
 import { buildMugTemplate, MUG_ARTWORK_HEIGHT, MUG_ARTWORK_WIDTH } from './mug-template.ts';
 
 export type { FontData };
@@ -53,7 +53,7 @@ export async function renderCertificate(
   const sealDataUrl = await fetchSeal(config.sealAssetUrl);
 
   const svg = await satori(
-    buildTemplate(config, name, achievement, sealDataUrl, serial),
+    buildCertTemplate(config, name, achievement, sealDataUrl, serial),
     {
       width:  1200,
       height: 850,

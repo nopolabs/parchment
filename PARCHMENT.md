@@ -52,11 +52,19 @@ Liveness check.
 
 ---
 
-### GET /parchment/render
+### GET /parchment/cert/render
 
 Returns a **preview** PNG synchronously. The footer shows `PREVIEW` instead of a
 serial number. No D1 record is created and no email is sent. Cached in R2 under
 `previews/{siteId}/`.
+
+`GET /parchment/render` is retained as a deprecated alias for backward
+compatibility. It returns the same image response plus:
+
+```
+Deprecation: true
+Link: </parchment/cert/render>; rel="successor-version"
+```
 
 **Query parameters:**
 
@@ -208,7 +216,7 @@ X-Parchment-Cache: HIT | MISS
 X-Parchment-Key: <r2 key>
 ```
 
-**Error responses:** same as `GET /parchment/render`.
+**Error responses:** same as `GET /parchment/cert/render`.
 
 ---
 
@@ -409,7 +417,7 @@ Downloaded by `npm run fonts` into `assets/fonts/` (gitignored).
 | `src/config.ts` | `SiteConfig` type + `getConfig()` / `getIssueApiKey()` |
 | `src/token.ts` | Personalization token mint + pattern |
 | `src/render.ts` | Satori + resvg-wasm pipeline (with `scale`) |
-| `src/template.ts` | Certificate layout (Satori node tree, no React) |
+| `src/cert-template.ts` | Certificate layout (Satori node tree, no React) |
 | `src/mug-template.ts` | 11 oz mug artwork layout (Satori node tree, no React) |
 | `src/r2.ts` | R2 cache key builder + get/put helpers |
 | `src/db.ts` | D1 helpers: find/insert records, token lookup + lazy backfill |

@@ -29,6 +29,58 @@ function mugKeyFromCertificateKey(r2Key: string): string {
   return base.replace(/\.png$/, '@11oz.png');
 }
 
+async function renderCertificatePreview(
+  env: Env,
+  config: SiteConfig,
+  url: URL,
+  deprecated: boolean = false,
+): Promise<Response> {
+  const name        = url.searchParams.get('name') ?? '';
+  const achievement = url.searchParams.get('achievement');
+
+  const validationError = validateNameAndAchievement(name, achievement);
+  if (validationError !== null) return validationError;
+
+  const ach           = achievement ?? config.achievementSubtitle;
+  const previewPrefix = `previews/${config.siteId}/`;
+  const key           = buildCacheKey(previewPrefix, name, ach);
+  const headers       = {
+    'Content-Type':      'image/png',
+    'Cache-Control':     'public, max-age=31536000, immutable',
+    'X-Parchment-Key':   key,
+    ...(deprecated ? {
+      'Deprecation': 'true',
+      'Link':        '</parchment/cert/render>; rel="successor-version"',
+    } : {}),
+  };
+
+  const cached = await getCached(env.PARCHMENT, key);
+  if (cached !== null) {
+    return new Response(cached, {
+      status:  200,
+      headers: {
+        ...headers,
+        'X-Parchment-Cache': 'HIT',
+      },
+    });
+  }
+
+  try {
+    const png = await renderCertificate(config, name, ach, 'PREVIEW', ALL_FONTS);
+    await putCached(env.PARCHMENT, key, png);
+    return new Response(png, {
+      status:  200,
+      headers: {
+        ...headers,
+        'X-Parchment-Cache': 'MISS',
+      },
+    });
+  } catch (err) {
+    console.error('parchment: render error', err);
+    return jsonError(500, { error: 'render failed', detail: String(err) });
+  }
+}
+
 export default {
   async fetch(request: Request, env: Env, _ctx: ExecutionContext): Promise<Response> {
     const url    = new URL(request.url);
@@ -48,49 +100,16 @@ export default {
       return Response.json({ status: 'ok', siteId });
     }
 
-    // ── GET /parchment/render — preview certificate ───────────────────────────
+    // ── GET /parchment/cert/render — preview certificate ──────────────────────
+    if (url.pathname === '/parchment/cert/render') {
+      if (method !== 'GET') return jsonError(405, { error: 'method not allowed' });
+      return renderCertificatePreview(env, config, url);
+    }
+
+    // ── GET /parchment/render — deprecated certificate preview alias ──────────
     if (url.pathname === '/parchment/render') {
       if (method !== 'GET') return jsonError(405, { error: 'method not allowed' });
-
-      const name        = url.searchParams.get('name') ?? '';
-      const achievement = url.searchParams.get('achievement');
-
-      const validationError = validateNameAndAchievement(name, achievement);
-      if (validationError !== null) return validationError;
-
-      const ach           = achievement ?? config.achievementSubtitle;
-      const previewPrefix = `previews/${config.siteId}/`;
-      const key           = buildCacheKey(previewPrefix, name, ach);
-
-      const cached = await getCached(env.PARCHMENT, key);
-      if (cached !== null) {
-        return new Response(cached, {
-          status:  200,
-          headers: {
-            'Content-Type':      'image/png',
-            'Cache-Control':     'public, max-age=31536000, immutable',
-            'X-Parchment-Cache': 'HIT',
-            'X-Parchment-Key':   key,
-          },
-        });
-      }
-
-      try {
-        const png = await renderCertificate(config, name, ach, 'PREVIEW', ALL_FONTS);
-        await putCached(env.PARCHMENT, key, png);
-        return new Response(png, {
-          status:  200,
-          headers: {
-            'Content-Type':      'image/png',
-            'Cache-Control':     'public, max-age=31536000, immutable',
-            'X-Parchment-Cache': 'MISS',
-            'X-Parchment-Key':   key,
-          },
-        });
-      } catch (err) {
-        console.error('parchment: render error', err);
-        return jsonError(500, { error: 'render failed', detail: String(err) });
-      }
+      return renderCertificatePreview(env, config, url, true);
     }
 
     // ── GET /parchment/mug/render — preview 11 oz mug artwork ────────────────
