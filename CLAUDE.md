@@ -159,8 +159,8 @@ internally under `mugs/{siteId}/...@11oz.png`. Responses are `no-store` for the
 same reason as `/parchment/cert/<token>`: the token is the URL.
 
 When `SiteConfig.printOfferUrl` is set (bbpp only), the certificate email
-includes a purchase link with `{token}` substituted. Designed for clodsite's
-bbpp certificate commerce — see
+includes a token-backed keepsake purchase link with `{token}` substituted.
+Designed for clodsite's bbpp certificate commerce — see
 `clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
 
 ## Conventions

@@ -28,7 +28,7 @@ export async function sendCertificateEmail(
   // a surprise), possibly the awardee's. Naming the awardee in the third
   // person reads correctly either way, and the offered actions suit both.
   const printOffer = printOfferUrl
-    ? `<p>Forward this email to share the certificate, or <a href="${printOfferUrl}">order a printed copy</a> to have it printed and mailed.</p>`
+    ? `<p>Forward this email to share the certificate, or <a href="${printOfferUrl}">order a custom mug</a> with this prize artwork.</p>`
     : '';
 
   const payload = {

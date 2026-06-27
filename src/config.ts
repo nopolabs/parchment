@@ -27,7 +27,7 @@ export interface SiteConfig {
   sealAssetUrl:        string;
   r2KeyPrefix:         string;
   fromEmail:           string;
-  // Optional URL template for buying a printed copy; "{token}" is replaced
+  // Optional URL template for buying a token-backed keepsake; "{token}" is replaced
   // with the certificate's personalization token. When absent (mtw), the
   // certificate email carries no purchase link.
   printOfferUrl?:      string;

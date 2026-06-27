@@ -270,8 +270,8 @@ identifiers, never capabilities. Tokens and serials are stored side by side in
 the same D1 row.
 
 When `SiteConfig.printOfferUrl` is set (currently bbpp only), the certificate
-email includes a purchase link with `{token}` substituted. This feeds clodsite's
-bbpp certificate commerce — see
+email includes a token-backed keepsake purchase link with `{token}` substituted.
+This feeds clodsite's bbpp certificate commerce — see
 `clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
 
 ---
@@ -285,7 +285,7 @@ handler) receives `{ siteId, name, achievement, email, serial, token }`:
    `/issue`): find-or-insert the D1 record, minting a token if needed
 2. Check R2 for the cached PNG → if absent: render with serial → store in R2
 3. Send the certificate PNG as an email attachment via Resend, appending the
-   print-offer link when `printOfferUrl` and a token are available
+   keepsake purchase link when `printOfferUrl` and a token are available
 
 Email failures are non-fatal (logged, message still acked); render/DB failures
 trigger a queue retry.
@@ -333,7 +333,7 @@ interface SiteConfig {
   sealAssetUrl:        string;   // fetched at render time; failure is non-fatal
   r2KeyPrefix:         string;   // e.g. "certs/mtw/"
   fromEmail:           string;   // sender address for Resend
-  printOfferUrl?:      string;   // optional print-purchase URL template; "{token}" substituted
+  printOfferUrl?:      string;   // optional keepsake-purchase URL template; "{token}" substituted
 }
 ```
 
