@@ -15,6 +15,15 @@ function node(type: string, props: Record<string, unknown>, ...children: (Satori
   return { type, props: { ...props, children: children.length === 1 ? children[0] : children } };
 }
 
+function centeredStyle(style: Record<string, unknown>): Record<string, unknown> {
+  return {
+    ...style,
+    textAlign:      'center',
+    display:        'flex',
+    justifyContent: 'center',
+  };
+}
+
 function wrapText(text: string, maxChars: number): string[] {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -78,7 +87,7 @@ function achievementBlock(achievement: string, color: string, fontFamily: string
   const firstBaseline = top + Math.floor((available - blockHeight) / 2);
 
   return lines.map((line, index) => node('div', {
-    style: {
+    style: centeredStyle({
       position:   'absolute',
       left:       65,
       top:        firstBaseline - fontSize + index * lineHeight,
@@ -87,10 +96,7 @@ function achievementBlock(achievement: string, color: string, fontFamily: string
       fontSize,
       fontStyle:  'italic',
       color,
-      textAlign:  'center',
-      display:    'flex',
-      justifyContent: 'center',
-    },
+    }),
   }, line));
 }
 
@@ -145,7 +151,7 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
     },
   },
     node('div', {
-      style: {
+      style: centeredStyle({
         position:   'absolute',
         left:       40,
         top:        67,
@@ -154,11 +160,10 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         fontWeight: 600,
         fontSize:   64,
         color:      palette.titleText,
-        textAlign:  'center',
-      },
+      }),
     }, titleTop),
     node('div', {
-      style: {
+      style: centeredStyle({
         position:   'absolute',
         left:       40,
         top:        138,
@@ -167,8 +172,7 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         fontWeight: 600,
         fontSize:   82,
         color:      palette.titleText,
-        textAlign:  'center',
-      },
+      }),
     }, titleBottom ?? ''),
     node('div', {
       style: {
@@ -182,7 +186,7 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
       },
     }),
     node('div', {
-      style: {
+      style: centeredStyle({
         position:   'absolute',
         left:       65,
         top:        286,
@@ -191,11 +195,10 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         fontSize:   28,
         fontStyle:  'italic',
         color:      palette.bodyText,
-        textAlign:  'center',
-      },
+      }),
     }, config.recipientLabel),
     node('div', {
-      style: {
+      style: centeredStyle({
         position:   'absolute',
         left:       50,
         top:        332,
@@ -204,11 +207,10 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         fontWeight: 600,
         fontSize:   nameFontSize(name),
         color:      palette.nameText,
-        textAlign:  'center',
-      },
+      }),
     }, name),
     node('div', {
-      style: {
+      style: centeredStyle({
         position:      'absolute',
         left:          40,
         top:           478,
@@ -218,8 +220,7 @@ function textFace(config: SiteConfig, name: string, achievement: string, serial:
         color:         palette.accent,
         letterSpacing: 4,
         textTransform: 'uppercase',
-        textAlign:     'center',
-      },
+      }),
     }, config.achievementLabel),
     ...achievementBlock(achievement, palette.bodyText, fonts.bodyFamily),
     node('div', {
