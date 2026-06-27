@@ -7,7 +7,9 @@ Given a recipient name and optional achievement text, it generates a styled cert
 ## What it does
 
 - `GET /parchment/render` — renders a certificate preview PNG synchronously (no email, no log entry)
+- `GET /parchment/mug/render` — renders preview artwork for an 11 oz mug
 - `POST /parchment/issue` — queues an official issuance; the queue consumer renders, assigns a serial number, logs to D1, and emails the certificate to the recipient
+- `GET /parchment/mug/<token>` — renders token-backed 11 oz mug artwork for an issued certificate
 
 Certificates are cached in R2 so repeat renders are instant. Each official certificate gets a unique serial number (`MTW-0042`, `BBPP-0007`, etc.).
 

@@ -9,6 +9,7 @@
     "types": "wrangler types",
     "lint": "eslint src --ext .ts",
     "typecheck": "tsc --noEmit",
+    "mug:sample": "node scripts/render-bbpp-mug-sample.mjs",
     "fonts": "bash scripts/download-fonts.sh",
     "setup:cf": "bash scripts/cloudflare-setup.sh"
   },
@@ -21,6 +22,7 @@
     "@typescript-eslint/eslint-plugin": "^7.0.0",
     "@typescript-eslint/parser": "^7.0.0",
     "eslint": "^8.0.0",
+    "sharp": "^0.34.5",
     "typescript": "^5.0.0",
     "wrangler": "^4.81.1"
   }

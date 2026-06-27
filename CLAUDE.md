@@ -143,10 +143,21 @@ scaled renders are cached in R2 as `<key>@Nx.png`. Responses are
 capability-addressed content. Renders on demand if the queue hasn't run yet.
 Unknown or malformed token → 404.
 
+### GET /parchment/mug/render
+Returns preview artwork for an 11 oz mug, using the same `name` and
+`achievement` validation as `/parchment/render`. Cached in R2 under
+`previews/{siteId}/mugs/`.
+
+### GET|HEAD /parchment/mug/&lt;token&gt;
+Resolves a personalization token to 2700×1050 PNG artwork for an 11 oz mug.
+`HEAD` is the cheap existence check; `GET` renders on demand and caches the PNG
+internally under `mugs/{siteId}/...@11oz.png`. Responses are `no-store` for the
+same reason as `/parchment/cert/<token>`: the token is the URL.
+
 When `SiteConfig.printOfferUrl` is set (bbpp only), the certificate email
 includes a purchase link with `{token}` substituted. Designed for clodsite's
 bbpp certificate commerce — see
-`codex-clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
+`clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
 
 ## Conventions
 

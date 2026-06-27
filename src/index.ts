@@ -1,12 +1,32 @@
 import { getConfig, getIssueApiKey, type SiteConfig } from './config.ts';
 import { buildCacheKey, getCached, putCached }      from './r2.ts';
-import { renderCertificate, ALL_FONTS }             from './render.ts';
+import { renderCertificate, renderMugArtwork, ALL_FONTS } from './render.ts';
 import { handleQueue, type IssueMessage }           from './queue.ts';
 import { hasRecentCertificate, findCertificate, findCertificateByToken, insertCertificate, setCertificateToken } from './db.ts';
 import { mintToken, TOKEN_PATTERN }                 from './token.ts';
 
 function jsonError(status: number, body: Record<string, string>): Response {
   return Response.json(body, { status });
+}
+
+function validateNameAndAchievement(name: string, achievement: string | null): Response | null {
+  if (!name) {
+    return jsonError(400, { error: 'name parameter is required' });
+  }
+  if (name.length > 100) {
+    return jsonError(400, { error: 'name must be 100 characters or fewer' });
+  }
+  if (achievement !== null && achievement.length > 200) {
+    return jsonError(400, { error: 'achievement must be 200 characters or fewer' });
+  }
+  return null;
+}
+
+function mugKeyFromCertificateKey(r2Key: string): string {
+  const base = r2Key.startsWith('certs/')
+    ? r2Key.replace(/^certs\//, 'mugs/')
+    : `mugs/${r2Key}`;
+  return base.replace(/\.png$/, '@11oz.png');
 }
 
 export default {
@@ -35,15 +55,8 @@ export default {
       const name        = url.searchParams.get('name') ?? '';
       const achievement = url.searchParams.get('achievement');
 
-      if (!name) {
-        return jsonError(400, { error: 'name parameter is required' });
-      }
-      if (name.length > 100) {
-        return jsonError(400, { error: 'name must be 100 characters or fewer' });
-      }
-      if (achievement !== null && achievement.length > 200) {
-        return jsonError(400, { error: 'achievement must be 200 characters or fewer' });
-      }
+      const validationError = validateNameAndAchievement(name, achievement);
+      if (validationError !== null) return validationError;
 
       const ach           = achievement ?? config.achievementSubtitle;
       const previewPrefix = `previews/${config.siteId}/`;
@@ -76,6 +89,51 @@ export default {
         });
       } catch (err) {
         console.error('parchment: render error', err);
+        return jsonError(500, { error: 'render failed', detail: String(err) });
+      }
+    }
+
+    // ── GET /parchment/mug/render — preview 11 oz mug artwork ────────────────
+    if (url.pathname === '/parchment/mug/render') {
+      if (method !== 'GET') return jsonError(405, { error: 'method not allowed' });
+
+      const name        = url.searchParams.get('name') ?? '';
+      const achievement = url.searchParams.get('achievement');
+
+      const validationError = validateNameAndAchievement(name, achievement);
+      if (validationError !== null) return validationError;
+
+      const ach           = achievement ?? config.achievementSubtitle;
+      const previewPrefix = `previews/${config.siteId}/mugs/`;
+      const key           = buildCacheKey(previewPrefix, name, ach);
+
+      const cached = await getCached(env.PARCHMENT, key);
+      if (cached !== null) {
+        return new Response(cached, {
+          status:  200,
+          headers: {
+            'Content-Type':      'image/png',
+            'Cache-Control':     'public, max-age=31536000, immutable',
+            'X-Parchment-Cache': 'HIT',
+            'X-Parchment-Key':   key,
+          },
+        });
+      }
+
+      try {
+        const png = await renderMugArtwork(config, name, ach, 'PREVIEW', ALL_FONTS);
+        await putCached(env.PARCHMENT, key, png);
+        return new Response(png, {
+          status:  200,
+          headers: {
+            'Content-Type':      'image/png',
+            'Cache-Control':     'public, max-age=31536000, immutable',
+            'X-Parchment-Cache': 'MISS',
+            'X-Parchment-Key':   key,
+          },
+        });
+      } catch (err) {
+        console.error('parchment: mug render error', err);
         return jsonError(500, { error: 'render failed', detail: String(err) });
       }
     }
@@ -204,6 +262,44 @@ export default {
           await putCached(env.PARCHMENT, key, png);
         } catch (err) {
           console.error('parchment: render error', err);
+          return jsonError(500, { error: 'render failed', detail: String(err) });
+        }
+      }
+      return new Response(png, { status: 200, headers });
+    }
+
+    // ── GET|HEAD /parchment/mug/<token> — 11 oz mug artwork ──────────────────
+    if (url.pathname.startsWith('/parchment/mug/')) {
+      if (method !== 'GET' && method !== 'HEAD') {
+        return jsonError(405, { error: 'method not allowed' });
+      }
+
+      const token = url.pathname.slice('/parchment/mug/'.length);
+      if (!TOKEN_PATTERN.test(token)) {
+        return jsonError(404, { error: 'not found' });
+      }
+
+      const record = await findCertificateByToken(env.PARCHMENT_LOG, config.siteId, token);
+      if (record === null) {
+        return jsonError(404, { error: 'not found' });
+      }
+
+      const headers = {
+        'Content-Type':  'image/png',
+        'Cache-Control': 'no-store',
+      };
+      if (method === 'HEAD') {
+        return new Response(null, { status: 200, headers });
+      }
+
+      const key = mugKeyFromCertificateKey(record.r2_key);
+      let png = await getCached(env.PARCHMENT, key);
+      if (png === null) {
+        try {
+          png = await renderMugArtwork(config, record.name, record.achievement, record.serial, ALL_FONTS);
+          await putCached(env.PARCHMENT, key, png);
+        } catch (err) {
+          console.error('parchment: mug render error', err);
           return jsonError(500, { error: 'render failed', detail: String(err) });
         }
       }

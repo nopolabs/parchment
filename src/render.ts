@@ -10,6 +10,7 @@ import sourceSansProRegular from '../assets/fonts/SourceSansPro-Regular.ttf';
 
 import type { SiteConfig } from './config.ts';
 import { buildTemplate } from './template.ts';
+import { buildMugTemplate, MUG_ARTWORK_HEIGHT, MUG_ARTWORK_WIDTH } from './mug-template.ts';
 
 export type { FontData };
 
@@ -62,6 +63,30 @@ export async function renderCertificate(
 
   await wasmReady;
   const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: 1200 * scale } });
+  const png   = resvg.render();
+  return png.asPng();
+}
+
+export async function renderMugArtwork(
+  config:      SiteConfig,
+  name:        string,
+  achievement: string,
+  serial:      string,
+  fonts:       FontData[],
+): Promise<Uint8Array> {
+  const sealDataUrl = await fetchSeal(config.sealAssetUrl);
+
+  const svg = await satori(
+    buildMugTemplate(config, name, achievement, sealDataUrl, serial),
+    {
+      width:  MUG_ARTWORK_WIDTH,
+      height: MUG_ARTWORK_HEIGHT,
+      fonts,
+    },
+  );
+
+  await wasmReady;
+  const resvg = new Resvg(svg, { fitTo: { mode: 'width', value: MUG_ARTWORK_WIDTH } });
   const png   = resvg.render();
   return png.asPng();
 }

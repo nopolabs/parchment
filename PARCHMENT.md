@@ -7,6 +7,7 @@ the `X-Site-ID` header, injected by each site's Cloudflare Pages Function proxy.
 **GitHub repo:** `nopolabs/parchment`
 **Runtime:** Cloudflare Workers (TypeScript strict mode)
 **Output:** `image/png` — 1200×850px certificate image (scalable to 4× for print)
+and 2700×1050px 11 oz mug artwork.
 
 For setup and daily commands, see `CLAUDE.md`. This document is the reference for
 the API, data model, and infrastructure.
@@ -181,6 +182,67 @@ hold capability-addressed content.
 
 ---
 
+### GET /parchment/mug/render
+
+Returns a **preview** 11 oz mug artwork PNG synchronously. No D1 record is
+created and no email is sent. Cached in R2 under `previews/{siteId}/mugs/`.
+
+The artwork is 2700×1050px: one face is a large seal; the other is a compact
+certificate-style plaque. Achievement text is never truncated. It wraps and
+adapts font size inside the space between the achievement label and footer.
+
+**Query parameters:**
+
+| Param | Required | Constraints |
+|---|---|---|
+| `name` | Yes | 1–100 characters |
+| `achievement` | No | 1–200 characters; defaults to `config.achievementSubtitle` |
+
+**Success response:**
+
+```
+200 OK
+Content-Type: image/png
+Cache-Control: public, max-age=31536000, immutable
+X-Parchment-Cache: HIT | MISS
+X-Parchment-Key: <r2 key>
+```
+
+**Error responses:** same as `GET /parchment/render`.
+
+---
+
+### GET|HEAD /parchment/mug/&lt;token&gt;
+
+Resolves a personalization token to official 11 oz mug artwork PNG.
+
+The token rules are the same as `/parchment/cert/<token>`: possession authorizes
+viewing/rendering the artwork, lookups are site-scoped, and malformed or
+cross-site tokens return 404.
+
+`HEAD` is the cheap existence check. `GET` renders on demand and caches the
+artwork in R2 using a derived key under `mugs/{siteId}/...@11oz.png`.
+
+**Success response:**
+
+```
+200 OK
+Content-Type: image/png
+Cache-Control: no-store
+```
+
+Responses are `no-store` because the token is the URL — CDN caches must not
+hold capability-addressed content.
+
+**Error responses:**
+
+```
+404 { "error": "not found" }   // unknown, malformed, or cross-site token
+500 { "error": "render failed", "detail": "..." }
+```
+
+---
+
 ### All other paths
 
 ```
@@ -202,7 +264,7 @@ the same D1 row.
 When `SiteConfig.printOfferUrl` is set (currently bbpp only), the certificate
 email includes a purchase link with `{token}` substituted. This feeds clodsite's
 bbpp certificate commerce — see
-`codex-clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
+`clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
 
 ---
 
@@ -277,8 +339,10 @@ One shared instance of each resource, bound in `wrangler.toml`.
 Permanent PNG cache. Keys are never deleted (except deliberately, to force a
 re-render after template changes). Key namespaces:
 - `previews/{siteId}/` — preview renders (no serial)
+- `previews/{siteId}/mugs/` — preview 11 oz mug artwork
 - `certs/{siteId}/` — official renders (with serial, logged in D1)
 - `certs/{siteId}/<key>@Nx.png` — scaled print-resolution renders
+- `mugs/{siteId}/<key>@11oz.png` — official token-backed 11 oz mug artwork
 
 ### D1 — database `parchment-log` (binding `PARCHMENT_LOG`)
 Schema after migrations 0001 + 0002:
@@ -346,6 +410,7 @@ Downloaded by `npm run fonts` into `assets/fonts/` (gitignored).
 | `src/token.ts` | Personalization token mint + pattern |
 | `src/render.ts` | Satori + resvg-wasm pipeline (with `scale`) |
 | `src/template.ts` | Certificate layout (Satori node tree, no React) |
+| `src/mug-template.ts` | 11 oz mug artwork layout (Satori node tree, no React) |
 | `src/r2.ts` | R2 cache key builder + get/put helpers |
 | `src/db.ts` | D1 helpers: find/insert records, token lookup + lazy backfill |
 | `src/queue.ts` | Queue consumer: render → email |

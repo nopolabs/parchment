@@ -8,6 +8,7 @@ assets/fonts/*.ttf
 
 # Node
 node_modules/
+artifacts/
 
 # Claude Code session files
 .claude/
