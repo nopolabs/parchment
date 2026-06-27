@@ -69,7 +69,7 @@ Both Pages sites set `PARCHMENT_BASE_URL` to the same shared worker URL. Site id
 - `deploy:mtw` and `deploy:bbpp` scripts → single `deploy` script
 
 ### No changes needed
-`render.ts`, `template.ts`, `r2.ts`, `db.ts`, `email.ts` — all take `config` or `siteId` as arguments already.
+`render.ts`, `cert-template.ts`, `r2.ts`, `db.ts`, `email.ts` — all take `config` or `siteId` as arguments already.
 
 ## Pages Function Changes (`~/dev/mtw4`, `~/dev/bbpp`)
 

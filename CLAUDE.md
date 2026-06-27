@@ -64,7 +64,7 @@ npm run dev         # starts wrangler dev on localhost:8787
 
 Verify (pass X-Site-ID header to select site):
 - `curl -H "X-Site-ID: mtw" http://localhost:8787/parchment/health` → `{"status":"ok","siteId":"mtw"}`
-- `curl -H "X-Site-ID: mtw" "http://localhost:8787/parchment/render?name=Test+User" --output test.png`
+- `curl -H "X-Site-ID: mtw" "http://localhost:8787/parchment/cert/render?name=Test+User" --output test.png`
 - `file test.png` → should report `PNG image data` with "PREVIEW" in footer
 
 ### Step 5 — Deploy (after Cloudflare setup is complete)
@@ -88,7 +88,7 @@ npm run deploy        # deploy to Cloudflare
 - src/config.ts     SiteConfig type + loader (getConfig, getIssueApiKey)
 - src/render.ts     Satori + resvg-wasm pipeline
 - src/r2.ts         R2 get/put helpers
-- src/template.ts   certificate layout (Satori node tree, no React)
+- src/cert-template.ts   certificate layout (Satori node tree, no React)
 - src/db.ts         D1 helpers (certificate log + serial numbers)
 - src/queue.ts      Queue consumer (render → log → email)
 - src/email.ts      Resend email delivery
@@ -114,11 +114,14 @@ All endpoints require an `X-Site-ID` header (injected by each site's Pages Funct
 ### GET /parchment/health
 Returns `{"status":"ok","siteId":"<siteid>"}`.
 
-### GET /parchment/render
+### GET /parchment/cert/render
 Returns a **preview** PNG with `PREVIEW` in the footer. Cached in R2 under `previews/{siteId}/`.
 No D1 record created, no email sent.
 
 Query params: `name` (required, max 100), `achievement` (optional, max 200).
+
+`GET /parchment/render` is retained as a deprecated alias for backward
+compatibility.
 
 ### POST /parchment/issue
 Issues an official certificate. Creates the D1 record (serial, e.g. `MTW-0001`,
@@ -145,7 +148,7 @@ Unknown or malformed token → 404.
 
 ### GET /parchment/mug/render
 Returns preview artwork for an 11 oz mug, using the same `name` and
-`achievement` validation as `/parchment/render`. Cached in R2 under
+`achievement` validation as `/parchment/cert/render`. Cached in R2 under
 `previews/{siteId}/mugs/`.
 
 ### GET|HEAD /parchment/mug/&lt;token&gt;
