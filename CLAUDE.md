@@ -13,6 +13,7 @@ Adding a new site requires no new Cloudflare infrastructure — only a new confi
 - Cloudflare Queues (async certificate issuance) — single shared queue `parchment-queue`
 - Resend (email delivery)
 - Wrangler 4.x
+- Worker custom domain: `parchment.nopolabs.com` via `wrangler.toml` `custom_domain = true`
 
 ## First-time setup
 

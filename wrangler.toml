@@ -3,6 +3,10 @@ main            = "src/index.ts"
 compatibility_date = "2024-09-23"
 compatibility_flags = ["nodejs_compat"]
 
+[[routes]]
+pattern = "parchment.nopolabs.com"
+custom_domain = true
+
 [[rules]]
 type  = "Data"
 globs = ["**/*.ttf"]
