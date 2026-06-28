@@ -103,7 +103,7 @@ npm run deploy        # deploy to Cloudflare
 3. Add `<SITEID>_ISSUE_API_KEY` to `src/secrets-env.d.ts`
 4. Set the new secret: `npx wrangler secret put <SITEID>_ISSUE_API_KEY`
 5. In the Pages repo, add `'X-Site-ID': '<siteid>'` to the Pages Function proxy headers
-6. Set `PARCHMENT_BASE_URL` on the Pages site to `https://parchment-worker.danrevel.workers.dev`
+6. Set `PARCHMENT_BASE_URL` on the Pages site to `https://parchment.nopolabs.com`
 7. `npm run deploy`
 
 No new R2 buckets, D1 databases, or Queues needed.
@@ -158,9 +158,9 @@ Resolves a personalization token to 2700×1050 PNG artwork for an 11 oz mug.
 internally under `mugs/{siteId}/...@11oz.png`. Responses are `no-store` for the
 same reason as `/parchment/cert/<token>`: the token is the URL.
 
-When `SiteConfig.printOfferUrl` is set (bbpp only), the certificate email
-includes a token-backed keepsake purchase link with `{token}` substituted.
-Designed for clodsite's bbpp certificate commerce — see
+When `SiteConfig.emailCta` is set (bbpp only), the certificate email includes a
+configurable token-backed call to action with `{token}` substituted in the CTA
+URL. Designed for clodsite's bbpp certificate commerce — see
 `clodsite/docs/superpowers/specs/2026-06-11-bbpp-certificate-commerce-design.md`.
 
 ## Conventions

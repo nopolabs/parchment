@@ -1,7 +1,14 @@
 const RESEND_API_URL = 'https://api.resend.com/emails';
 
+export interface EmailCta {
+  url:      string;
+  linkText: string;
+  prefix?:  string;
+  suffix?:  string;
+}
+
 // The recipient name is user-supplied (the awarder typed it) and lands in the
-// email HTML, so escape it. siteName/printOfferUrl are config-controlled.
+// email HTML, so escape it. siteName/emailCta are config-controlled.
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')
@@ -18,7 +25,7 @@ export async function sendCertificateEmail(
   name:          string,
   png:           Uint8Array,
   apiKey:        string,
-  printOfferUrl: string | null = null,
+  emailCta:      EmailCta | null = null,
 ): Promise<void> {
   const base64Png = Buffer.from(png).toString('base64');
   const safeName  = escapeHtml(name);
@@ -27,15 +34,15 @@ export async function sendCertificateEmail(
   // awarder entered — possibly their own (to deliver it themselves or keep it
   // a surprise), possibly the awardee's. Naming the awardee in the third
   // person reads correctly either way, and the offered actions suit both.
-  const printOffer = printOfferUrl
-    ? `<p>Forward this email to share the certificate, or <a href="${printOfferUrl}">order a custom mug</a> with this prize artwork.</p>`
+  const ctaHtml = emailCta
+    ? `<p>${escapeHtml(emailCta.prefix ?? '')}<a href="${escapeHtml(emailCta.url)}">${escapeHtml(emailCta.linkText)}</a>${escapeHtml(emailCta.suffix ?? '')}</p>`
     : '';
 
   const payload = {
     from:        `${siteName} <${from}>`,
     to:          [to],
     subject:     `A ${siteName} certificate for ${name}`,
-    html:        `<p>Congratulations to <strong>${safeName}</strong> — the <strong>${siteName}</strong> certificate is attached.</p>${printOffer}`,
+    html:        `<p>Congratulations to <strong>${safeName}</strong> — the <strong>${siteName}</strong> certificate is attached.</p>${ctaHtml}`,
     attachments: [
       {
         filename: 'certificate.png',

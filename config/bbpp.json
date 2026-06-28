@@ -20,5 +20,10 @@
   "sealAssetUrl": "https://bigbeautifulpeaceprize.com/assets/bbpp-seal.png",
   "r2KeyPrefix":  "certs/bbpp/",
   "fromEmail":    "awards@mastertimewaster.com",
-  "printOfferUrl": "https://bigbeautifulpeaceprize.com/print/?cert={token}"
+  "emailCta": {
+    "url": "https://bigbeautifulpeaceprize.com/mug/?cert={token}",
+    "prefix": "Forward this email to share the certificate, or ",
+    "linkText": "order a custom mug",
+    "suffix": " with this prize artwork."
+  }
 }

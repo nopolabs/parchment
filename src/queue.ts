@@ -2,7 +2,7 @@ import { getConfig }                            from './config.ts';
 import { buildCacheKey, getCached, putCached }  from './r2.ts';
 import { renderCertificate, ALL_FONTS }         from './render.ts';
 import { findCertificate, insertCertificate }   from './db.ts';
-import { sendCertificateEmail }                 from './email.ts';
+import { sendCertificateEmail, type EmailCta }  from './email.ts';
 import { mintToken }                            from './token.ts';
 
 export interface IssueMessage {
@@ -48,12 +48,23 @@ export async function handleQueue(
         await putCached(env.PARCHMENT, r2Key, png);
       }
 
-      const printOfferUrl = config.printOfferUrl && token
-        ? config.printOfferUrl.replace('{token}', token)
-        : null;
+      let emailCta: EmailCta | null = null;
+      if (token && config.emailCta) {
+        emailCta = {
+          ...config.emailCta,
+          url: config.emailCta.url.replace('{token}', token),
+        };
+      } else if (token && config.printOfferUrl) {
+        emailCta = {
+          url:      config.printOfferUrl.replace('{token}', token),
+          prefix:   'Forward this email to share the certificate, or ',
+          linkText: 'order a keepsake',
+          suffix:   ' with this certificate artwork.',
+        };
+      }
 
       try {
-        await sendCertificateEmail(email, config.fromEmail, config.siteName, name, png, env.RESEND_API_KEY, printOfferUrl);
+        await sendCertificateEmail(email, config.fromEmail, config.siteName, name, png, env.RESEND_API_KEY, emailCta);
       } catch (emailErr) {
         console.warn('parchment: email failed for', email, emailErr);
       }

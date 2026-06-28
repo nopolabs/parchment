@@ -15,6 +15,13 @@ export interface FontConfig {
   bodyFamily:  string;
 }
 
+export interface EmailCtaConfig {
+  url:      string;
+  linkText: string;
+  prefix?:  string;
+  suffix?:  string;
+}
+
 export interface SiteConfig {
   siteId:              string;
   siteName:            string;
@@ -27,9 +34,12 @@ export interface SiteConfig {
   sealAssetUrl:        string;
   r2KeyPrefix:         string;
   fromEmail:           string;
-  // Optional URL template for buying a token-backed keepsake; "{token}" is replaced
-  // with the certificate's personalization token. When absent (mtw), the
-  // certificate email carries no purchase link.
+  // Optional token-backed email CTA; "{token}" in url is replaced with the
+  // certificate's personalization token. When absent, the certificate email
+  // carries no purchase link.
+  emailCta?:           EmailCtaConfig;
+  // Deprecated. Kept so older site configs still get a generic token-backed
+  // keepsake CTA until they migrate to emailCta.
   printOfferUrl?:      string;
 }
 
